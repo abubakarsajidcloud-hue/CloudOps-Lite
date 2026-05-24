@@ -67,7 +67,7 @@ resource "aws_instance" "cloudops_ec2" {
 
   # AUTO WEBSITE DEPLOYMENT
 
-  user_data = file("userdata.sh")
+ user_data = file("userdata.sh")
 
 
   tags = {

@@ -8,16 +8,13 @@ resource "aws_s3_bucket" "cloudops_bucket" {
 }
 
 
-
-# WEBSITE FILE UPLOAD
-
 resource "aws_s3_object" "website_file" {
 
   bucket = aws_s3_bucket.cloudops_bucket.bucket
 
   key = "index.html"
 
-  source = "../website/index.html"
+  source = "index.html"
 
   content_type = "text/html"
 }
