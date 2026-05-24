@@ -45,17 +45,18 @@ resource "aws_security_group" "ec2_sg" {
 }
 
 
+
 # EC2 INSTANCE
 
 resource "aws_instance" "cloudops_ec2" {
 
   ami = var.ami_id
 
-iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
-
   instance_type = var.instance_type
 
   subnet_id = aws_subnet.public_subnet.id
+
+  iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 
   vpc_security_group_ids = [
     aws_security_group.ec2_sg.id
@@ -63,8 +64,13 @@ iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 
   associate_public_ip_address = true
 
+
+  # AUTO WEBSITE DEPLOYMENT
+
+  user_data = file("userdata.sh")
+
+
   tags = {
     Name = var.instance_name
   }
 }
-

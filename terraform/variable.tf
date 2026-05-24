@@ -15,5 +15,5 @@ variable "bucket_name" {
 }
 
 variable "ami_id" {
-  default = "ami-04f7a54071e74f488"
+  default = "ami-06930b0cd4de115a5"
 }

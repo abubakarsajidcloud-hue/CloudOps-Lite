@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CloudOps Lite — Live Cloud Operations Console</title>
+<meta name="description" content="CloudOps Lite — Infrastructure-as-Code & cloud operations automation platform built with Terraform, AWS, Bash and AWS CLI. Live monitoring console showcase by Muhammad Abubakar." />
+<meta name="theme-color" content="#050816" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#050816;
+  --bg-2:#0a1024;
+  --panel:rgba(14,22,46,.72);
+  --panel-2:rgba(20,30,60,.55);
+  --border:rgba(120,160,255,.14);
+  --border-strong:rgba(120,160,255,.28);
+  --text:#eaf1ff;
+  --muted:#8fa3c7;
+  --dim:#5e6e90;
+
+  --blue:#3b82f6;
+  --cyan:#22d3ee;
+  --indigo:#8b5cf6;
+  --pink:#ec4899;
+  --gold:#f59e0b;
+  --green:#22c55e;
+  --red:#ef4444;
+  --amber:#fbbf24;
+
+  --grad: linear-gradient(120deg,#22d3ee 0%,#3b82f6 35%,#8b5cf6 70%,#ec4899 100%);
+  --grad-2: linear-gradient(120deg,#22d3ee,#22c55e);
+  --grad-warm: linear-gradient(120deg,#f59e0b,#ec4899);
+
+  --shadow-glow: 0 0 80px rgba(59,130,246,.35);
+  --shadow-card: 0 20px 60px -20px rgba(0,0,0,.6), 0 0 0 1px var(--border);
+
+  --r-sm:10px; --r-md:16px; --r-lg:22px; --r-xl:28px;
+  --t: cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  line-height:1.55;
+}
+
+/* ============ BACKDROP ============ */
+.backdrop{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+.backdrop::before{
+  content:'';position:absolute;inset:-20%;
+  background:
+    radial-gradient(60% 50% at 15% 10%, rgba(59,130,246,.28), transparent 60%),
+    radial-gradient(50% 40% at 90% 20%, rgba(34,211,238,.22), transparent 60%),
+    radial-gradient(70% 50% at 50% 100%, rgba(139,92,246,.22), transparent 60%);
+  filter:blur(10px);
+}
+.grid-overlay{
+  position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(120,160,255,.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(120,160,255,.05) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse at center, #000 30%, transparent 80%);
+}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.55;pointer-events:none;z-index:-1;will-change:transform}
+.orb-1{width:480px;height:480px;background:#3b82f6;top:-100px;left:-100px;animation:float1 18s ease-in-out infinite}
+.orb-2{width:380px;height:380px;background:#22d3ee;top:30%;right:-120px;animation:float2 22s ease-in-out infinite}
+.orb-3{width:420px;height:420px;background:#8b5cf6;bottom:-150px;left:20%;animation:float3 26s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(80px,60px)}}
+@keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(-60px,80px)}}
+@keyframes float3{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,-50px)}}
+
+/* ============ NAV ============ */
+.nav{
+  position:fixed;top:18px;left:50%;transform:translateX(-50%);
+  z-index:50;width:min(1180px,calc(100% - 32px));
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px;border-radius:999px;
+  background:rgba(10,16,36,.7);backdrop-filter:blur(18px);
+  border:1px solid var(--border-strong);
+}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-weight:700}
+.brand-dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.88)}}
+.nav-links{display:flex;gap:6px}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:13.5px;font-weight:500;padding:8px 14px;border-radius:999px;transition:.25s var(--t)}
+.nav-links a:hover{color:var(--text);background:rgba(120,160,255,.08)}
+.nav-cta{padding:9px 18px;border-radius:999px;background:var(--grad);color:#06122b;font-weight:700;text-decoration:none;font-size:13.5px;box-shadow:var(--shadow-glow);transition:.3s var(--t)}
+.nav-cta:hover{transform:translateY(-2px)}
+@media (max-width:780px){.nav-links{display:none}}
+
+/* ============ LAYOUT ============ */
+.wrap{max-width:1240px;margin:0 auto;padding:140px 28px 80px}
+section{margin:120px 0;scroll-margin-top:110px}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:7px 14px;border-radius:999px;
+  background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.22);
+  font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--cyan);
+}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:-.02em;line-height:1.05;margin:0}
+h1{font-size:clamp(44px,7vw,84px)}
+h2{font-size:clamp(34px,4.5vw,54px);margin-bottom:14px}
+h3{font-size:22px}
+.lead{color:var(--muted);font-size:17px;max-width:680px}
+.gradient-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ============ HERO ============ */
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:60px;align-items:center}
+@media (max-width:980px){.hero{grid-template-columns:1fr;gap:50px}}
+.hero h1{margin:22px 0 24px}
+.hero-meta{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:38px;
+}
+.meta-card{
+  padding:18px;border-radius:var(--r-md);
+  background:var(--panel);border:1px solid var(--border);backdrop-filter:blur(10px);
+  transition:.3s var(--t);
+}
+.meta-card:hover{transform:translateY(-4px);border-color:var(--border-strong)}
+.meta-num{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:26px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.meta-lab{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px}
+@media (max-width:680px){.hero-meta{grid-template-columns:repeat(2,1fr)}}
+
+.hero-ctas{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap}
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:14px 24px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14.5px;
+  transition:.3s var(--t);cursor:pointer;border:none;font-family:inherit;
+}
+.btn-primary{background:var(--grad);color:#06122b;box-shadow:var(--shadow-glow)}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 0 110px rgba(59,130,246,.55)}
+.btn-ghost{background:var(--panel);border:1px solid var(--border-strong);color:var(--text)}
+.btn-ghost:hover{background:rgba(59,130,246,.12)}
+
+/* ============ CONSOLE (hero right) ============ */
+.console{
+  border-radius:var(--r-lg);overflow:hidden;
+  background:linear-gradient(180deg,#0a132b,#070d20);
+  border:1px solid var(--border-strong);
+  box-shadow:var(--shadow-card),var(--shadow-glow);
+  transform-style:preserve-3d;
+}
+.console-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:13px 18px;border-bottom:1px solid var(--border);
+  background:rgba(10,16,36,.8);
+}
+.dot{width:11px;height:11px;border-radius:50%}
+.dot.r{background:#ef4444}.dot.y{background:#fbbf24}.dot.g{background:#22c55e}
+.console-title{margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+.console-body{padding:22px;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.85;min-height:360px}
+.log-line{opacity:0;animation:type .35s var(--t) forwards}
+.log-line .ts{color:var(--dim)}
+.log-line .ok{color:var(--green)} .log-line .info{color:var(--cyan)} .log-line .warn{color:var(--amber)} .log-line .cmd{color:var(--text)}
+.log-line .tag{color:var(--indigo)}
+@keyframes type{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+.cursor{display:inline-block;width:8px;height:14px;background:var(--cyan);vertical-align:middle;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ============ STATUS DASHBOARD ============ */
+.dash{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}
+.card{
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:24px;backdrop-filter:blur(14px);position:relative;overflow:hidden;
+  transition:.4s var(--t);
+}
+.card:hover{transform:translateY(-4px);border-color:var(--border-strong);box-shadow:var(--shadow-card)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--grad);opacity:.7}
+.c-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.c-title{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.c-badge{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px}
+.b-green{background:rgba(34,197,94,.14);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.b-blue{background:rgba(59,130,246,.14);color:#7eb0ff;border:1px solid rgba(59,130,246,.3)}
+.b-amber{background:rgba(251,191,36,.14);color:var(--amber);border:1px solid rgba(251,191,36,.3)}
+
+.status-card{grid-column:span 4}
+.cpu-card{grid-column:span 4}
+.mem-card{grid-column:span 4}
+.uptime-card{grid-column:span 4}
+.net-card{grid-column:span 4}
+.cost-card{grid-column:span 4}
+@media (max-width:980px){
+  .status-card,.cpu-card,.mem-card,.uptime-card,.net-card,.cost-card{grid-column:span 6}
+}
+@media (max-width:600px){
+  .status-card,.cpu-card,.mem-card,.uptime-card,.net-card,.cost-card{grid-column:span 12}
+}
+
+/* Status big */
+.status-big{display:flex;align-items:center;gap:14px}
+.status-light{width:18px;height:18px;border-radius:50%;background:var(--green);box-shadow:0 0 0 6px rgba(34,197,94,.18),0 0 22px var(--green);animation:pulse 1.6s infinite}
+.status-text{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700}
+.region-row{display:flex;justify-content:space-between;margin-top:18px;padding-top:16px;border-top:1px solid var(--border);font-size:13px;color:var(--muted)}
+.region-row span{color:var(--text);font-family:'JetBrains Mono',monospace}
+
+/* Gauge */
+.gauge{position:relative;height:120px;display:flex;align-items:flex-end;justify-content:center}
+.gauge svg{width:200px;height:120px}
+.gauge-bg{fill:none;stroke:rgba(120,160,255,.12);stroke-width:14;stroke-linecap:round}
+.gauge-fg{fill:none;stroke-width:14;stroke-linecap:round;transition:stroke-dashoffset 1.2s var(--t)}
+.gauge-val{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:34px}
+.gauge-val small{font-size:16px;color:var(--muted);font-weight:500}
+.gauge-sub{text-align:center;margin-top:14px;color:var(--muted);font-size:13px}
+
+/* Uptime */
+.uptime-big{font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;background:var(--grad-2);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.01em}
+.uptime-sub{color:var(--muted);font-size:13px;margin-top:4px}
+.uptime-bars{display:flex;gap:3px;margin-top:18px;height:34px;align-items:flex-end}
+.uptime-bars span{flex:1;background:linear-gradient(180deg,var(--green),#16a34a);border-radius:2px;height:100%;opacity:.85;transition:.3s}
+.uptime-bars span.down{background:linear-gradient(180deg,var(--red),#dc2626);height:55%}
+.uptime-bars span:hover{transform:scaleY(1.1);opacity:1}
+
+/* Network sparkline */
+.net-row{display:flex;justify-content:space-between;margin-bottom:14px}
+.net-row div span{display:block;font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700}
+.net-row div small{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.1em}
+.sparkline{width:100%;height:60px}
+
+/* Cost */
+.cost-total{font-family:'Space Grotesk',sans-serif;font-size:34px;font-weight:700;background:var(--grad-warm);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cost-break{margin-top:14px;display:grid;gap:8px;font-size:13px}
+.cost-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--border)}
+.cost-row:last-child{border:none}
+.cost-row b{font-family:'JetBrains Mono',monospace;color:var(--text);font-weight:500}
+
+/* ============ ARCHITECTURE ============ */
+.arch{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:36px;
+}
+@media (max-width:880px){.arch{grid-template-columns:repeat(2,1fr)}}
+.arch-node{
+  padding:18px;border-radius:var(--r-md);
+  background:var(--panel);border:1px solid var(--border);
+  text-align:center;font-size:13px;color:var(--muted);
+  position:relative;transition:.3s var(--t);
+}
+.arch-node:hover{border-color:var(--cyan);color:var(--text);transform:translateY(-3px)}
+.arch-node b{display:block;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:15px;margin-bottom:4px}
+.arch-node .ico{font-size:22px;margin-bottom:8px;display:block}
+
+/* ============ AWS GRID ============ */
+.aws-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:36px}
+.aws{
+  padding:22px;border-radius:var(--r-md);
+  background:var(--panel);border:1px solid var(--border);
+  transition:.3s var(--t);position:relative;overflow:hidden;
+}
+.aws:hover{transform:translateY(-4px);border-color:var(--border-strong)}
+.aws::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:var(--grad);transform:scaleX(0);transform-origin:left;transition:.4s var(--t)}
+.aws:hover::before{transform:scaleX(1)}
+.aws-ico{width:42px;height:42px;border-radius:10px;background:rgba(59,130,246,.14);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px;color:var(--cyan)}
+.aws h4{margin:0 0 6px;font-family:'Space Grotesk',sans-serif;font-size:16px}
+.aws p{margin:0;color:var(--muted);font-size:13px}
+
+/* ============ SCRIPTS ============ */
+.scripts{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:36px}
+@media (max-width:780px){.scripts{grid-template-columns:1fr}}
+.script{
+  padding:22px;border-radius:var(--r-md);
+  background:var(--panel);border:1px solid var(--border);
+  transition:.3s var(--t);
+}
+.script:hover{border-color:var(--border-strong);transform:translateY(-3px)}
+.script-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.script-name{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--cyan);font-weight:600}
+.script-tag{font-size:11px;color:var(--dim);padding:3px 8px;border-radius:6px;background:rgba(120,160,255,.08);font-family:'JetBrains Mono',monospace}
+.script p{margin:0;color:var(--muted);font-size:13.5px}
+.script-cmd{
+  margin-top:14px;padding:11px 14px;border-radius:8px;background:#04091a;
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--green);
+  border:1px solid var(--border);overflow-x:auto;
+}
+.script-cmd::before{content:'$ ';color:var(--dim)}
+
+/* ============ TF MODULES ============ */
+.tf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:30px}
+.tf{
+  padding:16px;border-radius:var(--r-sm);
+  background:var(--panel-2);border:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:13px;
+  transition:.25s var(--t);position:relative;
+}
+.tf:hover{border-color:var(--cyan);color:var(--cyan);transform:translateY(-2px)}
+.tf b{color:var(--cyan);display:block;margin-bottom:4px;font-weight:600}
+.tf small{color:var(--muted);font-size:11.5px;font-family:'Inter',sans-serif}
+
+/* ============ TIMELINE ============ */
+.timeline{position:relative;margin-top:40px;padding-left:36px}
+.timeline::before{content:'';position:absolute;left:14px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--cyan),var(--indigo),transparent)}
+.step{position:relative;margin-bottom:28px;padding:18px 22px;border-radius:var(--r-md);background:var(--panel);border:1px solid var(--border);transition:.3s var(--t)}
+.step:hover{border-color:var(--border-strong);transform:translateX(4px)}
+.step::before{
+  content:counter(step,decimal-leading-zero);counter-increment:step;
+  position:absolute;left:-36px;top:18px;
+  width:30px;height:30px;border-radius:50%;
+  background:var(--grad);color:#06122b;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 18px rgba(59,130,246,.45);
+}
+.timeline{counter-reset:step}
+.step h4{margin:0 0 6px;font-family:'Space Grotesk',sans-serif;font-size:17px}
+.step p{margin:0;color:var(--muted);font-size:13.5px}
+.step code{font-family:'JetBrains Mono',monospace;color:var(--cyan);font-size:12.5px;background:rgba(34,211,238,.08);padding:2px 7px;border-radius:5px;margin-left:6px}
+
+/* ============ FUTURE ============ */
+.future{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:32px}
+.future div{
+  padding:14px 16px;border-radius:var(--r-sm);
+  background:var(--panel-2);border:1px solid var(--border);
+  font-size:13.5px;color:var(--muted);
+  transition:.25s var(--t);display:flex;align-items:center;gap:10px;
+}
+.future div:hover{border-color:var(--indigo);color:var(--text);transform:translateY(-2px)}
+.future div::before{content:'→';color:var(--indigo);font-weight:700}
+
+/* ============ FOOTER ============ */
+footer{margin-top:140px;padding:60px 28px 40px;border-top:1px solid var(--border);text-align:center}
+footer .brand{justify-content:center;font-size:20px;margin-bottom:12px}
+footer p{color:var(--muted);font-size:13.5px}
+footer a{color:var(--cyan);text-decoration:none}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(30px);transition:.7s var(--t)}
+.reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<div class="backdrop"></div>
+<div class="grid-overlay"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<nav class="nav">
+  <div class="brand"><span class="brand-dot"></span> CloudOps Lite</div>
+  <div class="nav-links">
+    <a href="#console">Console</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#aws">AWS</a>
+    <a href="#terraform">Terraform</a>
+    <a href="#scripts">Scripts</a>
+    <a href="#deploy">Deploy</a>
+  </div>
+  <a class="nav-cta" href="#deploy">Run Deploy →</a>
+</nav>
+
+<main class="wrap">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="top">
+    <div>
+      <div class="eyebrow"><span class="brand-dot"></span> System Online · us-east-1</div>
+      <h1>Live Cloud Operations <span class="gradient-text">Console</span></h1>
+      <p class="lead">CloudOps Lite is an Infrastructure-as-Code & cloud operations automation platform built with <b>Terraform</b>, <b>AWS</b>, <b>Bash</b> and the <b>AWS CLI</b>. It provisions infrastructure, monitors health, tracks cost, and optimizes idle resources — all from the command line.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="#console">View Live Status →</a>
+        <a class="btn btn-ghost" href="#architecture">Architecture</a>
+      </div>
+      <div class="hero-meta">
+        <div class="meta-card"><div class="meta-num" data-count="11">0</div><div class="meta-lab">AWS Resources</div></div>
+        <div class="meta-card"><div class="meta-num" data-count="7">0</div><div class="meta-lab">AWS Services</div></div>
+        <div class="meta-card"><div class="meta-num" data-count="6">0</div><div class="meta-lab">Bash Scripts</div></div>
+        <div class="meta-card"><div class="meta-num" data-count="9">0</div><div class="meta-lab">TF Modules</div></div>
+      </div>
+    </div>
+
+    <div class="console" id="tilt">
+      <div class="console-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="console-title">cloudops@aws-console: ~/cloudops-lite</span>
+      </div>
+      <div class="console-body" id="termLog">
+        <!-- JS injected -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LIVE STATUS DASHBOARD ============ -->
+  <section id="console" class="reveal">
+    <div class="eyebrow">01 · Live Monitoring</div>
+    <h2>System <span class="gradient-text">Status</span></h2>
+    <p class="lead">Real-time CloudWatch metrics pulled by <code style="font-family:'JetBrains Mono',monospace;color:var(--cyan)">./monitor.sh</code> through the AWS CLI. CPU, memory, network and uptime — all observed from a single operational console.</p>
+
+    <div class="dash" style="margin-top:36px">
+
+      <div class="card status-card">
+        <div class="c-head"><div class="c-title">Server Status</div><div class="c-badge b-green"><span class="brand-dot"></span> Online</div></div>
+        <div class="status-big">
+          <div class="status-light"></div>
+          <div>
+            <div class="status-text">Healthy</div>
+            <div class="uptime-sub">All checks passing</div>
+          </div>
+        </div>
+        <div class="region-row"><span>Region</span><span>us-east-1</span></div>
+        <div class="region-row" style="border-top:none;padding-top:6px"><span>Instance</span><span>t3.micro</span></div>
+      </div>
+
+      <div class="card cpu-card">
+        <div class="c-head"><div class="c-title">CPU Usage</div><div class="c-badge b-blue">i-0a7c3f</div></div>
+        <div class="gauge">
+          <svg viewBox="0 0 200 120">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#3b82f6"/></linearGradient>
+            </defs>
+            <path class="gauge-bg" d="M20,110 A80,80 0 0 1 180,110"/>
+            <path class="gauge-fg" id="cpuArc" d="M20,110 A80,80 0 0 1 180,110" stroke="url(#g1)" stroke-dasharray="251" stroke-dashoffset="251"/>
+          </svg>
+          <div class="gauge-val"><span id="cpuVal">0</span><small>%</small></div>
+        </div>
+        <div class="gauge-sub">avg over last 5 min</div>
+      </div>
+
+      <div class="card mem-card">
+        <div class="c-head"><div class="c-title">Memory</div><div class="c-badge b-blue">1.0 GiB</div></div>
+        <div class="gauge">
+          <svg viewBox="0 0 200 120">
+            <defs>
+              <linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#ec4899"/></linearGradient>
+            </defs>
+            <path class="gauge-bg" d="M20,110 A80,80 0 0 1 180,110"/>
+            <path class="gauge-fg" id="memArc" d="M20,110 A80,80 0 0 1 180,110" stroke="url(#g2)" stroke-dasharray="251" stroke-dashoffset="251"/>
+          </svg>
+          <div class="gauge-val"><span id="memVal">0</span><small>%</small></div>
+        </div>
+        <div class="gauge-sub">412 MiB used / 1024 MiB</div>
+      </div>
+
+      <div class="card uptime-card">
+        <div class="c-head"><div class="c-title">Uptime</div><div class="c-badge b-green">99.97%</div></div>
+        <div class="uptime-big" id="uptime">00d 00h 00m</div>
+        <div class="uptime-sub">since last terraform apply</div>
+        <div class="uptime-bars" id="upBars"></div>
+      </div>
+
+      <div class="card net-card">
+        <div class="c-head"><div class="c-title">Network I/O</div><div class="c-badge b-blue">eth0</div></div>
+        <div class="net-row">
+          <div><small>↓ IN</small><span id="netIn">0.0 MB</span></div>
+          <div style="text-align:right"><small>↑ OUT</small><span id="netOut">0.0 MB</span></div>
+        </div>
+        <svg class="sparkline" viewBox="0 0 200 60" preserveAspectRatio="none">
+          <path id="spark" d="" fill="none" stroke="url(#g1)" stroke-width="2"/>
+          <path id="sparkFill" d="" fill="url(#g1)" opacity=".15"/>
+        </svg>
+      </div>
+
+      <div class="card cost-card">
+        <div class="c-head"><div class="c-title">Cost (MTD)</div><div class="c-badge b-amber">Forecast $8.40</div></div>
+        <div class="cost-total">$5.70</div>
+        <div class="cost-break">
+          <div class="cost-row"><span>EC2</span><b>$4.50</b></div>
+          <div class="cost-row"><span>S3</span><b>$1.20</b></div>
+          <div class="cost-row"><span>CloudWatch</span><b>$0.00</b></div>
+          <div class="cost-row"><span>SNS</span><b>$0.00</b></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ ARCHITECTURE ============ -->
+  <section id="architecture" class="reveal">
+    <div class="eyebrow">02 · Architecture</div>
+    <h2>Operational <span class="gradient-text">Flow</span></h2>
+    <p class="lead">A modular cloud operations pipeline: developer commands → Bash automation → Terraform → AWS infrastructure → CloudWatch observability → cost intelligence → automated reporting.</p>
+
+    <div class="arch">
+      <div class="arch-node"><span class="ico">👨‍💻</span><b>Developer</b>CLI commands</div>
+      <div class="arch-node"><span class="ico">🐙</span><b>GitHub</b>Source of truth</div>
+      <div class="arch-node"><span class="ico">⚙️</span><b>Bash Scripts</b>Automation layer</div>
+      <div class="arch-node"><span class="ico">🏗️</span><b>Terraform</b>Infrastructure as code</div>
+      <div class="arch-node"><span class="ico">☁️</span><b>AWS Cloud</b>VPC · EC2 · S3 · IAM</div>
+      <div class="arch-node"><span class="ico">📊</span><b>CloudWatch</b>Metrics & alarms</div>
+      <div class="arch-node"><span class="ico">💰</span><b>Cost Explorer</b>FinOps tracking</div>
+      <div class="arch-node"><span class="ico">📨</span><b>SNS</b>Alert pipeline</div>
+    </div>
+  </section>
+
+  <!-- ============ AWS SERVICES ============ -->
+  <section id="aws" class="reveal">
+    <div class="eyebrow">03 · AWS Services</div>
+    <h2>Provisioned <span class="gradient-text">Stack</span></h2>
+    <p class="lead">Seven AWS services orchestrated through Terraform and the AWS CLI — covering compute, networking, storage, identity, observability, alerting and cost intelligence.</p>
+
+    <div class="aws-grid">
+      <div class="aws"><div class="aws-ico">🖥️</div><h4>Amazon EC2</h4><p>Compute instance powering monitoring and optimization workflows.</p></div>
+      <div class="aws"><div class="aws-ico">🌐</div><h4>Amazon VPC</h4><p>Isolated network with public subnet, IGW, route tables.</p></div>
+      <div class="aws"><div class="aws-ico">📦</div><h4>Amazon S3</h4><p>Report storage and future Terraform remote backend.</p></div>
+      <div class="aws"><div class="aws-ico">🔐</div><h4>AWS IAM</h4><p>Roles, policies and instance profiles for EC2 + CloudWatch.</p></div>
+      <div class="aws"><div class="aws-ico">📈</div><h4>CloudWatch</h4><p>CPU metrics, health checks and alarm thresholds.</p></div>
+      <div class="aws"><div class="aws-ico">📣</div><h4>AWS SNS</h4><p>Automated alert notifications for optimization events.</p></div>
+      <div class="aws"><div class="aws-ico">💸</div><h4>Cost Explorer</h4><p>Monthly spend, service breakdown and cost forecasts.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ TERRAFORM ============ -->
+  <section id="terraform" class="reveal">
+    <div class="eyebrow">04 · Infrastructure as Code</div>
+    <h2>Terraform <span class="gradient-text">Modules</span></h2>
+    <p class="lead">Nine HCL modules describe every resource — fully declarative, version-controlled and reproducible. Standard workflow: <code style="font-family:'JetBrains Mono',monospace;color:var(--cyan)">init → validate → plan → apply</code>.</p>
+
+    <div class="tf-grid">
+      <div class="tf"><b>provider.tf</b><small>AWS region & provider config</small></div>
+      <div class="tf"><b>variables.tf</b><small>Reusable input variables</small></div>
+      <div class="tf"><b>vpc.tf</b><small>VPC, subnet, IGW, routes</small></div>
+      <div class="tf"><b>ec2.tf</b><small>Instance + security group</small></div>
+      <div class="tf"><b>s3.tf</b><small>Storage bucket</small></div>
+      <div class="tf"><b>iam.tf</b><small>Role + policy attachment</small></div>
+      <div class="tf"><b>cloudwatch.tf</b><small>CPU metric alarm</small></div>
+      <div class="tf"><b>sns.tf</b><small>Alert topic</small></div>
+      <div class="tf"><b>outputs.tf</b><small>Public IP, VPC ID, bucket</small></div>
+    </div>
+  </section>
+
+  <!-- ============ SCRIPTS ============ -->
+  <section id="scripts" class="reveal">
+    <div class="eyebrow">05 · Automation</div>
+    <h2>Bash <span class="gradient-text">Operations</span></h2>
+    <p class="lead">Six scripts wrap the entire operational lifecycle — deploy, observe, cost-report, optimize, report and destroy.</p>
+
+    <div class="scripts">
+      <div class="script">
+        <div class="script-head"><div class="script-name">deploy.sh</div><div class="script-tag">provision</div></div>
+        <p>Runs <code>terraform fmt</code>, <code>validate</code>, <code>plan</code> and <code>apply</code> in sequence to provision the entire stack.</p>
+        <div class="script-cmd">./deploy.sh</div>
+      </div>
+      <div class="script">
+        <div class="script-head"><div class="script-name">monitor.sh</div><div class="script-tag">observe</div></div>
+        <p>Pulls CloudWatch CPU metrics through the AWS CLI and renders a health report on the terminal.</p>
+        <div class="script-cmd">./monitor.sh</div>
+      </div>
+      <div class="script">
+        <div class="script-head"><div class="script-name">cost-report.sh</div><div class="script-tag">finops</div></div>
+        <p>Queries AWS Cost Explorer for MTD spend, per-service breakdown and a month-end forecast.</p>
+        <div class="script-cmd">./cost-report.sh</div>
+      </div>
+      <div class="script">
+        <div class="script-head"><div class="script-name">shutdown-idle.sh</div><div class="script-tag">optimize</div></div>
+        <p>Detects EC2 instances with CPU &lt; 5% for 2 hours and stops them automatically to reduce cost.</p>
+        <div class="script-cmd">./shutdown-idle.sh</div>
+      </div>
+      <div class="script">
+        <div class="script-head"><div class="script-name">report.sh</div><div class="script-tag">report</div></div>
+        <p>Aggregates infrastructure state and writes operational reports into the <code>reports/</code> directory.</p>
+        <div class="script-cmd">./report.sh</div>
+      </div>
+      <div class="script">
+        <div class="script-head"><div class="script-name">destroy.sh</div><div class="script-tag">teardown</div></div>
+        <p>Safely tears down all provisioned AWS resources via <code>terraform destroy</code>.</p>
+        <div class="script-cmd">./destroy.sh</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DEPLOY STEPS ============ -->
+  <section id="deploy" class="reveal">
+    <div class="eyebrow">06 · Deployment</div>
+    <h2>From Zero to <span class="gradient-text">Production</span></h2>
+    <p class="lead">Six commands to take the entire platform from a clean machine to a fully operational, observed and cost-tracked AWS environment.</p>
+
+    <div class="timeline">
+      <div class="step"><h4>Configure AWS CLI <code>aws configure</code></h4><p>Provide access key, secret, region and default output format.</p></div>
+      <div class="step"><h4>Initialize Terraform <code>terraform init</code></h4><p>Download providers and prepare the working directory.</p></div>
+      <div class="step"><h4>Deploy Infrastructure <code>./deploy.sh</code></h4><p>Provision VPC, EC2, S3, IAM, CloudWatch and SNS in one command.</p></div>
+      <div class="step"><h4>Monitor Health <code>./monitor.sh</code></h4><p>Stream CloudWatch metrics directly to the console.</p></div>
+      <div class="step"><h4>Track Cost <code>./cost-report.sh</code></h4><p>Generate cost breakdown and a month-end forecast.</p></div>
+      <div class="step"><h4>Optimize & Report <code>./shutdown-idle.sh</code></h4><p>Auto-stop idle instances and archive operational reports.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ FUTURE ============ -->
+  <section class="reveal">
+    <div class="eyebrow">07 · Roadmap</div>
+    <h2>Future <span class="gradient-text">Enhancements</span></h2>
+    <p class="lead">Planned upgrades to evolve CloudOps Lite into a multi-environment, fully observable production platform.</p>
+
+    <div class="future">
+      <div>Multi-environment Terraform support</div>
+      <div>S3 remote backend</div>
+      <div>DynamoDB state locking</div>
+      <div>Advanced CloudWatch dashboards</div>
+      <div>Auto-scaling integration</div>
+      <div>Lambda-based optimization</div>
+      <div>Slack / email alerts</div>
+      <div>Kubernetes monitoring</div>
+      <div>Dockerized monitoring tools</div>
+      <div>GitHub Actions CI/CD</div>
+      <div>Centralized CloudWatch logs</div>
+      <div>Infrastructure security scanning</div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="brand"><span class="brand-dot"></span> CloudOps Lite</div>
+  <p>Built by <a href="#">Muhammad Abubakar Sajid</a> · Cloud & DevOps Engineering Portfolio Project</p>
+  <p style="margin-top:10px;font-family:'JetBrains Mono',monospace;color:var(--dim);font-size:12px">terraform · aws · bash · cloudwatch · finops · automation</p>
+</footer>
+
+<script>
+/* ============ TERMINAL TYPING ============ */
+const logs = [
+  {t:'10:42:01', c:'cmd',  m:'$ ./deploy.sh'},
+  {t:'10:42:02', c:'info', m:'→ terraform fmt ......................... ok'},
+  {t:'10:42:03', c:'info', m:'→ terraform validate .................... ok'},
+  {t:'10:42:05', c:'info', m:'→ terraform plan ........................ 11 to add'},
+  {t:'10:42:18', c:'ok',   m:'✓ aws_vpc.main created'},
+  {t:'10:42:22', c:'ok',   m:'✓ aws_subnet.public created'},
+  {t:'10:42:25', c:'ok',   m:'✓ aws_internet_gateway.igw created'},
+  {t:'10:42:33', c:'ok',   m:'✓ aws_security_group.web created'},
+  {t:'10:42:51', c:'ok',   m:'✓ aws_instance.ops [t3.micro] running'},
+  {t:'10:42:58', c:'ok',   m:'✓ aws_s3_bucket.reports created'},
+  {t:'10:43:04', c:'ok',   m:'✓ aws_iam_role.ec2_ops attached'},
+  {t:'10:43:09', c:'ok',   m:'✓ aws_cloudwatch_metric_alarm.cpu armed'},
+  {t:'10:43:11', c:'ok',   m:'✓ aws_sns_topic.alerts ready'},
+  {t:'10:43:12', c:'info', m:'Apply complete · 11 added · 0 changed · 0 destroyed'},
+  {t:'10:43:14', c:'cmd',  m:'$ ./monitor.sh'},
+  {t:'10:43:15', c:'info', m:'fetching CloudWatch metrics …'},
+  {t:'10:43:16', c:'ok',   m:'CPU: 31% · MEM: 41% · NET: healthy · STATUS: ONLINE'},
+];
+const term = document.getElementById('termLog');
+let i=0;
+function nextLine(){
+  if(i>=logs.length){
+    term.insertAdjacentHTML('beforeend', '<div class="log-line"><span class="cursor"></span></div>');
+    return;
+  }
+  const l = logs[i++];
+  const el = document.createElement('div');
+  el.className = 'log-line';
+  el.innerHTML = `<span class="ts">[${l.t}]</span> <span class="${l.c}">${l.m}</span>`;
+  term.appendChild(el);
+  term.scrollTop = term.scrollHeight;
+  setTimeout(nextLine, 380);
+}
+setTimeout(nextLine, 400);
+
+/* ============ GAUGES ============ */
+function setGauge(id, pct){
+  const arc = document.getElementById(id);
+  const total = 251;
+  arc.style.strokeDashoffset = total - (total * pct/100);
+}
+function animVal(id, target){
+  const el = document.getElementById(id);
+  let v=0;
+  const step=()=>{ v+=Math.max(1,(target-v)*.08); if(v>=target-.5){el.textContent=target;return;} el.textContent=Math.round(v); requestAnimationFrame(step);};
+  step();
+}
+setTimeout(()=>{ setGauge('cpuArc',31); animVal('cpuVal',31); setGauge('memArc',41); animVal('memVal',41); }, 600);
+
+/* live jitter */
+setInterval(()=>{
+  const cpu = 28 + Math.round(Math.random()*8);
+  const mem = 38 + Math.round(Math.random()*6);
+  setGauge('cpuArc',cpu); document.getElementById('cpuVal').textContent = cpu;
+  setGauge('memArc',mem); document.getElementById('memVal').textContent = mem;
+},2800);
+
+/* ============ UPTIME ============ */
+const start = Date.now() - (3*86400 + 7*3600 + 22*60)*1000;
+function tickUptime(){
+  const s = Math.floor((Date.now()-start)/1000);
+  const d = Math.floor(s/86400), h = Math.floor((s%86400)/3600), m = Math.floor((s%3600)/60);
+  document.getElementById('uptime').textContent =
+    `${String(d).padStart(2,'0')}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`;
+}
+tickUptime(); setInterval(tickUptime, 30000);
+
+/* uptime bars */
+const up = document.getElementById('upBars');
+for(let k=0;k<40;k++){
+  const b = document.createElement('span');
+  if(k===22) b.classList.add('down');
+  up.appendChild(b);
+}
+
+/* ============ SPARKLINE ============ */
+const spark = document.getElementById('spark');
+const sparkFill = document.getElementById('sparkFill');
+let pts = Array.from({length:30},()=>20+Math.random()*30);
+function renderSpark(){
+  const w = 200, h = 60, step = w/(pts.length-1);
+  let d = `M0,${h - pts[0]}`;
+  pts.forEach((p,idx)=>{ if(idx>0) d += ` L${idx*step},${h-p}`;});
+  spark.setAttribute('d', d);
+  sparkFill.setAttribute('d', d + ` L${w},${h} L0,${h} Z`);
+}
+renderSpark();
+setInterval(()=>{
+  pts.shift(); pts.push(20+Math.random()*30);
+  renderSpark();
+  const inV = (12 + Math.random()*4).toFixed(1);
+  const outV = (6 + Math.random()*3).toFixed(1);
+  document.getElementById('netIn').textContent  = inV + ' MB';
+  document.getElementById('netOut').textContent = outV + ' MB';
+}, 1800);
+
+/* ============ COUNTUPS ============ */
+document.querySelectorAll('[data-count]').forEach(el=>{
+  const target = +el.dataset.count; let v=0;
+  const step=()=>{ v+=Math.max(1,(target-v)*.15); if(v>=target){el.textContent=target+'+';return;} el.textContent=Math.floor(v); requestAnimationFrame(step);};
+  setTimeout(step, 500);
+});
+
+/* ============ REVEAL ============ */
+const io = new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);}
+}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ============ TILT CONSOLE ============ */
+const tilt = document.getElementById('tilt');
+tilt.addEventListener('mousemove', e=>{
+  const r = tilt.getBoundingClientRect();
+  const x = (e.clientX - r.left)/r.width - .5;
+  const y = (e.clientY - r.top)/r.height - .5;
+  tilt.style.transform = `perspective(1000px) rotateY(${x*6}deg) rotateX(${-y*6}deg)`;
+});
+tilt.addEventListener('mouseleave', ()=> tilt.style.transform='');
+</script>
+</body>
+</html>
