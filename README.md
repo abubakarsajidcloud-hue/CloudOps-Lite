@@ -2,50 +2,74 @@
 
 ## Overview
 
-CloudOps Lite is an Infrastructure-as-Code (IaC) and cloud operations automation project built using Terraform, AWS, Bash scripting, and AWS CLI. The platform provisions AWS infrastructure, monitors cloud resources, tracks operational costs, and performs automated optimization of idle resources through CLI-driven workflows.
+CloudOps Lite is a production-oriented Infrastructure-as-Code (IaC) and cloud operations automation platform built using Terraform, AWS, Bash scripting, and AWS CLI.
 
-The project focuses on practical cloud operations engineering by combining infrastructure provisioning, monitoring, cost management, and automation into a single operational platform.
+The project provisions AWS infrastructure, deploys a web server automatically using EC2 User Data, hosts a dynamic Apache web page, monitors infrastructure health, tracks AWS operational costs, and automates optimization workflows using CLI-driven automation scripts.
 
-CloudOps Lite demonstrates real-world DevOps and cloud engineering concepts including Infrastructure as Code, monitoring automation, FinOps practices, AWS cloud services management, and operational scripting.
+CloudOps Lite demonstrates practical DevOps and cloud engineering concepts including:
+
+- Infrastructure as Code (IaC)
+- AWS cloud provisioning
+- Linux server automation
+- EC2 bootstrapping with User Data
+- Apache web server deployment
+- Monitoring and alerting
+- FinOps and cost optimization
+- Infrastructure lifecycle automation
+- Operational scripting
+- Cloud observability workflows
+
+The platform simulates real-world cloud operations engineering practices used in modern DevOps environments.
 
 ---
 
 # Architecture
 
-The project architecture follows a modular cloud operations workflow.
-
-Developer commands are executed through Bash automation scripts, which interact with Terraform and AWS CLI to provision and manage AWS infrastructure resources.
+The project follows a modular cloud operations workflow where infrastructure provisioning, server automation, monitoring, and optimization are integrated into a unified platform.
 
 Architecture Flow:
 
+```text
 Developer
-↓
+   ↓
 GitHub Repository
-↓
+   ↓
 Bash Automation Scripts
-↓
+   ↓
 Terraform Infrastructure
-↓
+   ↓
 AWS Cloud Resources
-↓
+   ↓
+EC2 User Data Bootstrap
+   ↓
+Apache Web Server Deployment
+   ↓
 CloudWatch Monitoring
-↓
+   ↓
 Cost Tracking & Optimization
-↓
+   ↓
 Automated Reporting
+```
 
-Provisioned Infrastructure:
+---
 
-* VPC
-* Public Subnet
-* Internet Gateway
-* Route Table
-* Security Group
-* EC2 Instance
-* S3 Bucket
-* IAM Role
-* CloudWatch Alarm
-* SNS Alert Topic
+# Provisioned Infrastructure
+
+CloudOps Lite provisions the following AWS resources:
+
+- VPC
+- Public Subnet
+- Internet Gateway
+- Route Table
+- Route Table Association
+- Security Group
+- EC2 Instance
+- Apache Web Server
+- S3 Bucket
+- IAM Role
+- IAM Instance Profile
+- CloudWatch Alarm
+- SNS Alert Topic
 
 ---
 
@@ -53,31 +77,133 @@ Provisioned Infrastructure:
 
 ## Amazon EC2
 
-Used to provision and manage the compute instance for cloud operations monitoring and optimization.
+Used to provision the Linux compute instance that hosts the Apache web server and operational monitoring environment.
+
+---
 
 ## Amazon VPC
 
-Used to create an isolated virtual network environment including public subnet configuration and routing.
+Used to create an isolated virtual cloud network with custom networking configuration.
+
+Features include:
+
+- Public subnet
+- Internet connectivity
+- Route tables
+- Security isolation
+
+---
 
 ## Amazon S3
 
-Used for cloud storage, report storage, and future Terraform remote backend support.
+Used for:
+
+- Report storage
+- Future Terraform remote backend support
+- Infrastructure artifact storage
+
+---
 
 ## AWS IAM
 
-Used to create roles and permissions for EC2 instances and CloudWatch monitoring.
+Used to create secure permissions and roles for EC2 and monitoring services.
+
+---
 
 ## Amazon CloudWatch
 
-Used for infrastructure monitoring, CPU utilization tracking, and operational health metrics.
+Used for:
 
-## AWS SNS
+- CPU utilization monitoring
+- Infrastructure health tracking
+- CloudWatch alarms
+- Operational observability
 
-Used for sending automated alert notifications during optimization workflows.
+---
+
+## Amazon SNS
+
+Used to send automated infrastructure and monitoring alerts.
+
+---
 
 ## AWS Cost Explorer
 
-Used to monitor AWS spending, generate cost reports, and forecast operational costs.
+Used for:
+
+- Cost monitoring
+- Service-level spending analysis
+- Cost forecasting
+- FinOps reporting
+
+---
+
+# Apache Web Server Automation
+
+CloudOps Lite automatically installs and configures the Apache web server during EC2 instance provisioning using a Terraform User Data script.
+
+The automation workflow:
+
+```text
+EC2 Launch
+   ↓
+userdata.sh executes automatically
+   ↓
+Apache installed
+   ↓
+Apache service started
+   ↓
+Apache enabled on boot
+   ↓
+index.html deployed
+   ↓
+Web server becomes publicly accessible
+```
+
+---
+
+# User Data Bootstrap
+
+The project includes:
+
+## userdata.sh
+
+Automates EC2 instance configuration during launch.
+
+Functions include:
+
+- System package updates
+- Apache installation
+- Apache service startup
+- Service auto-enable on reboot
+- Deployment of custom web page
+
+Example workflow:
+
+```bash
+#!/bin/bash
+
+yum update -y
+yum install httpd -y
+
+systemctl start httpd
+systemctl enable httpd
+
+cp /tmp/index.html /var/www/html/index.html
+```
+
+---
+
+## index.html
+
+Custom Apache landing page deployed automatically during infrastructure provisioning.
+
+The page demonstrates:
+
+- Successful deployment
+- Apache configuration
+- Infrastructure automation
+- CloudOps Lite branding
 
 ---
 
@@ -85,7 +211,7 @@ Used to monitor AWS spending, generate cost reports, and forecast operational co
 
 Terraform is used as the Infrastructure-as-Code tool for provisioning AWS resources.
 
-The Terraform workflow includes:
+Terraform workflow:
 
 ```bash
 terraform init
@@ -94,67 +220,118 @@ terraform plan
 terraform apply
 ```
 
-Infrastructure Modules:
+---
+
+# Terraform Files
 
 ## provider.tf
 
-Configures the AWS provider and region settings.
+Configures:
+
+- AWS provider
+- AWS region
+- Provider settings
+
+---
 
 ## variables.tf
 
-Stores reusable infrastructure variables such as region, instance type, bucket name, and AMI ID.
+Stores reusable variables including:
+
+- AWS region
+- Instance type
+- Bucket name
+- AMI ID
+- Key pair
+- Tags
+
+---
 
 ## vpc.tf
 
 Creates:
 
-* VPC
-* Public Subnet
-* Internet Gateway
-* Route Table
-* Route Association
+- VPC
+- Public subnet
+- Internet gateway
+- Route table
+- Route association
+
+---
 
 ## ec2.tf
 
 Creates:
 
-* EC2 instance
-* Security Group
-* Public networking rules
+- EC2 instance
+- Security group
+- Public networking rules
+- User Data integration
+- Apache server deployment
+
+---
+
+## userdata.sh
+
+Bootstraps the EC2 instance automatically during launch.
+
+Installs and configures:
+
+- Apache HTTP Server
+- Web application page
+
+---
+
+## index.html
+
+Custom landing page hosted by the Apache server.
+
+---
 
 ## s3.tf
 
 Creates:
 
-* S3 bucket for storage and reporting
+- S3 bucket for reports and storage
+
+---
 
 ## iam.tf
 
 Creates:
 
-* IAM role
-* IAM policy attachment
-* EC2 instance profile
+- IAM role
+- IAM policy attachment
+- EC2 instance profile
+
+---
 
 ## cloudwatch.tf
 
 Creates:
 
-* CloudWatch metric alarm for CPU monitoring
+- CloudWatch CPU utilization alarm
+- Monitoring alerts
+
+---
 
 ## sns.tf
 
 Creates:
 
-* SNS alert topic for operational notifications
+- SNS alert topic
+- Notification system
+
+---
 
 ## outputs.tf
 
-Displays infrastructure outputs such as:
+Displays outputs including:
 
-* EC2 public IP
-* VPC ID
-* S3 bucket name
+- EC2 public IP
+- Website URL
+- VPC ID
+- S3 bucket name
 
 ---
 
@@ -162,29 +339,31 @@ Displays infrastructure outputs such as:
 
 CloudOps Lite includes an automated monitoring system using CloudWatch metrics and Bash scripts.
 
-Monitoring features include:
+Monitoring capabilities:
 
-* CPU utilization tracking
-* Instance health monitoring
-* Network monitoring
-* Infrastructure status checks
+- CPU utilization tracking
+- EC2 health monitoring
+- Infrastructure status checks
+- Network monitoring
+- CloudWatch metric retrieval
 
-Monitoring Command:
+Run monitoring workflow:
 
 ```bash
 ./monitor.sh
 ```
 
-Example Output:
+Example output:
 
 ```text
 CloudOps Monitoring Report
 
 CPU Usage: 31%
 Status: Healthy
+Apache Server: Running
 ```
 
-The monitoring workflow retrieves CloudWatch metrics using AWS CLI commands and displays infrastructure health information in real time.
+The monitoring scripts retrieve CloudWatch metrics using AWS CLI commands and display operational infrastructure health information in real time.
 
 ---
 
@@ -192,20 +371,21 @@ The monitoring workflow retrieves CloudWatch metrics using AWS CLI commands and 
 
 CloudOps Lite includes FinOps-focused operational cost tracking using AWS Cost Explorer.
 
-Cost tracking features include:
+Features include:
 
-* Monthly AWS spending
-* Service-level cost breakdown
-* Cost forecasting
-* Usage monitoring
+- Monthly AWS spending analysis
+- Cost forecasting
+- Service-level breakdown
+- Infrastructure usage monitoring
+- Idle resource detection
 
-Cost Report Command:
+Run cost report:
 
 ```bash
 ./cost-report.sh
 ```
 
-Example Output:
+Example output:
 
 ```text
 Current Month Cost
@@ -217,42 +397,11 @@ Forecast:
 $8.40
 ```
 
-The project demonstrates practical cost-awareness strategies used in real cloud operations environments.
-
 ---
 
-# Automation Scripts
+# Idle Resource Optimization
 
-The platform uses Bash scripts to automate cloud operations workflows.
-
-## deploy.sh
-
-Automates Terraform deployment workflow.
-
-Functions:
-
-* terraform fmt
-* terraform validate
-* terraform plan
-* terraform apply
-
----
-
-## monitor.sh
-
-Retrieves CloudWatch monitoring metrics and infrastructure health information.
-
----
-
-## cost-report.sh
-
-Generates AWS cost and usage reports using AWS Cost Explorer.
-
----
-
-## shutdown-idle.sh
-
-Automatically detects idle EC2 instances and shuts them down to reduce operational costs.
+CloudOps Lite automatically detects low-utilization EC2 instances and shuts them down to reduce operational costs.
 
 Optimization Logic:
 
@@ -262,17 +411,97 @@ for 2 hours
 → Stop EC2 Instance
 ```
 
+This workflow demonstrates practical FinOps and cloud cost optimization strategies used in production cloud operations.
+
+---
+
+# Automation Scripts
+
+The platform uses Bash automation scripts for infrastructure operations.
+
+---
+
+## deploy.sh
+
+Automates Terraform deployment workflow.
+
+Functions:
+
+- terraform fmt
+- terraform validate
+- terraform init
+- terraform plan
+- terraform apply
+
+Run:
+
+```bash
+./deploy.sh
+```
+
+---
+
+## monitor.sh
+
+Retrieves:
+
+- CloudWatch metrics
+- Infrastructure health
+- Apache server status
+
+Run:
+
+```bash
+./monitor.sh
+```
+
+---
+
+## cost-report.sh
+
+Generates AWS cost and usage reports using AWS Cost Explorer.
+
+Run:
+
+```bash
+./cost-report.sh
+```
+
+---
+
+## shutdown-idle.sh
+
+Detects and shuts down idle EC2 instances automatically.
+
+Run:
+
+```bash
+./shutdown-idle.sh
+```
+
 ---
 
 ## report.sh
 
-Generates operational infrastructure reports and stores them inside the reports directory.
+Generates operational infrastructure reports and stores them in the reports directory.
+
+Run:
+
+```bash
+./report.sh
+```
 
 ---
 
 ## destroy.sh
 
-Safely destroys AWS infrastructure resources using Terraform.
+Safely destroys all Terraform-managed infrastructure resources.
+
+Run:
+
+```bash
+./destroy.sh
+```
 
 ---
 
@@ -280,13 +509,15 @@ Safely destroys AWS infrastructure resources using Terraform.
 
 ## Prerequisites
 
-Install the following tools:
+Install:
 
-* AWS CLI
-* Terraform
-* Git
+- AWS CLI
+- Terraform
+- Git
 
-Configure AWS CLI:
+---
+
+## Configure AWS CLI
 
 ```bash
 aws configure
@@ -294,23 +525,30 @@ aws configure
 
 Provide:
 
-* AWS Access Key
-* AWS Secret Key
-* AWS Region
-* Output format
+- AWS Access Key
+- AWS Secret Access Key
+- AWS Region
+- Output format
+
+Example region:
+
+```text
+sa-east-1
+```
 
 ---
 
-## Clone Repository
+# Clone Repository
 
 ```bash
 git clone YOUR_REPOSITORY_URL
+
 cd cloudops-lite
 ```
 
 ---
 
-## Initialize Terraform
+# Initialize Terraform
 
 ```bash
 cd terraform
@@ -320,7 +558,7 @@ terraform init
 
 ---
 
-## Validate Infrastructure
+# Validate Infrastructure
 
 ```bash
 terraform validate
@@ -340,7 +578,19 @@ cd scripts
 
 ---
 
-## Step 2 — Monitor Infrastructure
+## Step 2 — Access Apache Web Server
+
+Open the EC2 public IP in a browser:
+
+```text
+http://EC2_PUBLIC_IP
+```
+
+The custom `index.html` page should load automatically.
+
+---
+
+## Step 3 — Monitor Infrastructure
 
 ```bash
 ./monitor.sh
@@ -348,7 +598,7 @@ cd scripts
 
 ---
 
-## Step 3 — Track Cloud Cost
+## Step 4 — Track Cloud Cost
 
 ```bash
 ./cost-report.sh
@@ -356,7 +606,7 @@ cd scripts
 
 ---
 
-## Step 4 — Run Optimization
+## Step 5 — Run Optimization Workflow
 
 ```bash
 ./shutdown-idle.sh
@@ -364,7 +614,7 @@ cd scripts
 
 ---
 
-## Step 5 — Generate Reports
+## Step 6 — Generate Reports
 
 ```bash
 ./report.sh
@@ -372,7 +622,7 @@ cd scripts
 
 ---
 
-## Step 6 — Destroy Infrastructure
+## Step 7 — Destroy Infrastructure
 
 ```bash
 ./destroy.sh
@@ -384,14 +634,16 @@ cd scripts
 
 The project includes screenshots demonstrating:
 
-* Terraform deployment
-* AWS EC2 dashboard
-* VPC configuration
-* CloudWatch metrics
-* Cost Explorer dashboard
-* Monitoring script output
-* Cost report output
-* Optimization workflow
+- Terraform deployment
+- EC2 dashboard
+- VPC configuration
+- Apache web server
+- Browser output
+- CloudWatch metrics
+- SNS alerts
+- Cost Explorer dashboard
+- Monitoring scripts
+- Optimization workflow
 
 Screenshots are stored inside:
 
@@ -405,37 +657,42 @@ docs/screenshots/
 
 This project provided practical experience with:
 
-* Infrastructure as Code
-* Terraform workflows
-* AWS cloud infrastructure
-* Cloud monitoring systems
-* FinOps and cost optimization
-* Bash automation scripting
-* AWS CLI operations
-* Infrastructure lifecycle management
-* Operational alerting
-* Cloud automation best practices
+- Infrastructure as Code
+- Terraform workflows
+- AWS infrastructure provisioning
+- Linux server automation
+- EC2 bootstrapping
+- Apache web server deployment
+- Cloud monitoring systems
+- FinOps and cost optimization
+- Bash automation scripting
+- AWS CLI operations
+- Infrastructure lifecycle management
+- Operational alerting
+- Production-oriented cloud operations workflows
 
-The project also improved understanding of production-oriented cloud operations engineering concepts.
+The project significantly improved understanding of real-world DevOps and cloud engineering practices.
 
 ---
 
 # Future Improvements
 
-Future enhancements planned for CloudOps Lite include:
+Planned future enhancements:
 
-* Multi-environment Terraform support
-* Terraform remote backend using S3
-* DynamoDB state locking
-* Advanced CloudWatch dashboards
-* Auto-scaling integration
-* Lambda-based optimization workflows
-* Slack or email alert integrations
-* Kubernetes monitoring support
-* Dockerized monitoring tools
-* CI/CD integration with GitHub Actions
-* Centralized logging using CloudWatch Logs
-* Infrastructure security scanning
+- Multi-environment Terraform support
+- Terraform remote backend using S3
+- DynamoDB state locking
+- Auto Scaling Groups
+- Application Load Balancer
+- Advanced CloudWatch dashboards
+- Lambda-based optimization workflows
+- Slack/email alert integrations
+- Dockerized monitoring tools
+- GitHub Actions CI/CD integration
+- Kubernetes monitoring
+- Centralized logging with CloudWatch Logs
+- Security scanning automation
+- Infrastructure compliance validation
 
 ---
 
@@ -445,7 +702,6 @@ Future enhancements planned for CloudOps Lite include:
 cloudops-lite/
 │
 ├── terraform/
-│   ├── main.tf
 │   ├── provider.tf
 │   ├── variables.tf
 │   ├── outputs.tf
@@ -454,7 +710,9 @@ cloudops-lite/
 │   ├── s3.tf
 │   ├── iam.tf
 │   ├── cloudwatch.tf
-│   └── sns.tf
+│   ├── sns.tf
+│   ├── userdata.sh
+│   └── index.html
 │
 ├── scripts/
 │   ├── deploy.sh
@@ -481,4 +739,23 @@ cloudops-lite/
 
 CloudOps Lite is a practical cloud operations and infrastructure automation platform designed to demonstrate real-world DevOps and cloud engineering capabilities.
 
-The project combines Terraform, AWS cloud services, monitoring systems, FinOps practices, and automation scripting into a production-oriented cloud operations workflow suitable for DevOps, Cloud Engineering, and Infrastructure Engineering portfolios.
+The project combines:
+
+- Terraform Infrastructure as Code
+- AWS cloud services
+- Linux automation
+- Apache server deployment
+- Monitoring systems
+- FinOps practices
+- Cloud optimization workflows
+- Bash operational scripting
+
+into a production-oriented cloud operations platform suitable for:
+
+- DevOps portfolios
+- Cloud engineering portfolios
+- Infrastructure engineering portfolios
+- Internship demonstrations
+- Real-world AWS operations learning
+
+The project reflects modern operational engineering practices used in cloud-native environments.
